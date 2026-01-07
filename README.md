@@ -47,26 +47,102 @@ No cenário de crédito, os erros do modelo têm pesos financeiros diferentes:
 
 ## 📈 Principais Resultados
 
-### 1. Performance do Modelo
-* **Acurácia:** XX% (*Insira seu valor*)
-* **Recall (Classe de Risco):** XX% (*Insira seu valor - métrica crucial*)
-* **ROC-AUC:** 0.XX
+### 1. Performance dos Modelos
+
+## 📊 Comparativo de Modelos
+
+Como o objetivo do negócio é evitar o calote, a métrica mais importante para nós é o **Recall da Classe 2 (Maus Pagadores)**. Um modelo com alta acurácia que não detecta os caloteiros não serve para o banco.
+
+| Modelo | Acurácia Global | Recall (Maus Pagadores) | F1-Score (Maus Pagadores) | Observação |
+| :--- | :---: | :---: | :---: | :--- |
+| **Logistic Regression** | 66% | **0.60** 🏆 | 0.50 | Melhor detector de risco |
+| **Random Forest** | 73% | 0.51 | **0.52** | Melhor equilíbrio geral |
+| Support Vector Machine | **75%** | 0.38 | 0.47 | Alta acurácia, mas deixa passar muitos riscos |
+| Decision Tree | 67% | 0.32 | 0.35 | Baixa performance em risco |
+| K-Nearest Neighbors | 70% | 0.05 ❌ | 0.08 | Incapaz de detectar caloteiros |
+
+> **Conclusão:** Apesar do SVM ter a maior acurácia (75%), a **Regressão Logística** se mostrou mais viável para o negócio por identificar 60% dos maus pagadores, contra apenas 38% do SVM.
+
 
 ### 2. Impacto Financeiro (Matriz de Custos)
-Ao simular uma carteira de empréstimos, o modelo apresentou os seguintes resultados:
+Para demonstrar a aplicabilidade prática dos modelos, simulamos uma operação de crédito real. Em problemas de risco, a métrica técnica (Acurácia) é menos importante do que o **Lucro Líquido**.
 
-| Cenário | Resultado Financeiro |
-| :--- | :--- |
-| Sem Modelo (Aceitar Todos) | R$ -XXX.XXX (Prejuízo) |
-| **Com Nosso Modelo** | **R$ +XXX.XXX (Lucro)** |
+#### 1. Premissas da Simulação
+Adotamos os seguintes valores para cada cliente da base de teste:
+* **Empréstimo Médio:** R$ 5.000,00
+* **Lucro (Juros Recebidos):** R$ 2.000,00 (Para bons pagadores aprovados)
+* **Prejuízo (Inadimplência):** -R$ 5.000,00 (Para maus pagadores aprovados)
 
-### 3. Fatores de Decisão (SHAP)
-As variáveis que mais influenciaram o risco de crédito foram:
-1.  Status da Conta Corrente (*Checking Account*)
-2.  Duração do Empréstimo (*Duration*)
-3.  Histórico de Crédito (*Credit History*)
+#### 2. Resultados da Simulação
 
-*(Recomendo colocar aqui uma imagem do gráfico `shap.summary_plot`)*
+Comparativo do Lucro Líquido gerado por cada modelo versus um cenário base (sem modelo de IA).
+
+| Modelo | Resultado Financeiro | Lucro Extra vs. Sem Modelo | Performance |
+| :--- | :--- | :--- | :---: |
+| **Logistic Regression** | **R$ 121.000,00** | **+ R$ 112.000,00** | 🏆 **Campeão** |
+| Random Forest | R$ 118.000,00 | + R$ 109.000,00 | 🥈 Vice |
+| Decision Tree | R$ 112.000,00 | + R$ 103.000,00 | 🥉 3º Lugar |
+| *Sem Modelo (Baseline)* | *R$ 9.000,00* | *R$ 0,00* | ⚠️ Risco Alto |
+| K-Nearest Neighbors | R$ 1.000,00 | <span style="color:red">- R$ 8.000,00</span> | ❌ Prejuízo |
+
+
+#### 3. Conclusão de Negócio
+
+* **A Melhor Escolha:** A **Regressão Logística** foi o modelo mais eficiente. Apesar de ter uma acurácia global menor que o SVM ou Random Forest, ela teve o melhor desempenho na detecção de caloteiros (Recall da Classe 2), maximizando o lucro final.
+* **O Perigo do KNN:** O modelo KNN apresentou um desempenho financeiro **pior do que não ter modelo nenhum** (R$ 1.000 vs R$ 9.000 do baseline). Isso ocorre porque ele falhou em identificar os perfis de risco, aprovando empréstimos que resultaram em prejuízo massivo.
+
+
+#### 4. Simulação Financeira
+```
+--- Simulação Financeira (Decision Tree) ---
+Clientes Bons Aprovados: 126 (Lucro: R$ 126000)
+Clientes Bons Rejeitados (Custo de Oportunidade): 41 (Perda: R$ 41000)
+Calotes Tomados: 28 (Prejuízo: R$ -140000)
+=============================================
+RESULTADO LÍQUIDO DA CARTEIRA: R$ -55,000.00
+
+
+
+--- Simulação Financeira (Random Forest) ---
+Clientes Bons Aprovados: 139 (Lucro: R$ 139000)
+Clientes Bons Rejeitados (Custo de Oportunidade): 28 (Perda: R$ 28000)
+Calotes Tomados: 32 (Prejuízo: R$ -160000)
+=============================================
+RESULTADO LÍQUIDO DA CARTEIRA: R$ -49,000.00
+
+
+
+--- Simulação Financeira (Logistic Regression) ---
+Clientes Bons Aprovados: 118 (Lucro: R$ 118000)
+Clientes Bons Rejeitados (Custo de Oportunidade): 49 (Perda: R$ 49000)
+Calotes Tomados: 23 (Prejuízo: R$ -115000)
+=============================================
+RESULTADO LÍQUIDO DA CARTEIRA: R$ -46,000.00
+
+
+
+--- Simulação Financeira (K-Nearest Neighbors) ---
+Clientes Bons Aprovados: 83 (Lucro: R$ 83000)
+Clientes Bons Rejeitados (Custo de Oportunidade): 84 (Perda: R$ 84000)
+Calotes Tomados: 33 (Prejuízo: R$ -165000)
+=============================================
+RESULTADO LÍQUIDO DA CARTEIRA: R$ -166,000.00
+
+```
+
+#### 5. Otimização do Limiar de Decisão (Threshold Tuning)Otimização do Limiar de Decisão (Threshold Tuning)
+
+Por padrão, algoritmos de Machine Learning classificam um cliente como "Mau Pagador" se a probabilidade for maior que 50% (0.5). Porém, em nossa análise financeira, descobrimos que **esse padrão gera prejuízo**.
+
+Realizamos uma análise de sensibilidade variando o limiar de decisão de 0 a 100% para encontrar o ponto de lucro máximo ("Sweet Spot").
+
+![Gráfico de Lucratividade por Threshold](img/analise_lucratividade.png)
+
+
+**Insights do Gráfico:**
+1.  **O Perigo do Padrão (0.5):** Se utilizássemos o threshold padrão de 0.5, a carteira entraria em prejuízo (região abaixo da linha vermelha tracejada), pois o modelo seria "leniente" demais.
+2.  **O Ponto Ótimo:** O lucro máximo é atingido com um threshold mais rigoroso, entre **0.15 e 0.25**. Isso significa que devemos negar crédito para qualquer cliente com probabilidade de calote acima de ~20%, e não esperar chegar a 50%.
+3.  **Robustez:** A Regressão Logística (Linha Laranja) se mostrou mais estável, mantendo a lucratividade positiva por uma faixa maior de limiares do que o Random Forest.
 
 ---
 
