@@ -1,0 +1,21 @@
+# Manipulação de Dados
+pandas
+numpy
+
+# Visualização de Dados
+matplotlib
+seaborn
+
+# Machine Learning e Pré-processamento
+scikit-learn
+xgboost
+
+# Tratamento de Desbalanceamento (Crucial para o seu projeto)
+imbalanced-learn
+
+# Fonte de Dados (Para baixar o German Credit Data)
+ucimlrepo
+
+# Ambiente (Opcional, mas bom para garantir que o Jupyter rode bem)
+ipykernel
+jupyter
