@@ -92,47 +92,41 @@ Comparativo do Lucro Líquido gerado por cada modelo versus um cenário base (se
 * **O Perigo do KNN:** O modelo KNN apresentou um desempenho financeiro **pior do que não ter modelo nenhum** (R$ 1.000 vs R$ 9.000 do baseline). Isso ocorre porque ele falhou em identificar os perfis de risco, aprovando empréstimos que resultaram em prejuízo massivo.
 
 
-#### 4. Simulação Financeira
-```
+### 4. Diagnóstico Inicial: O Risco do Limiar Padrão (0.5)
+
+Inicialmente, rodamos a simulação financeira utilizando o **threshold padrão de 50%** (ou seja, só negamos crédito se a certeza de calote for > 0.5).
+
+**O resultado foi desastroso:** Como o custo do calote é muito alto (5x o lucro), ser "leniente" gerou prejuízo em **todos os modelos**. Isso prova que usar Machine Learning "fora da caixa" sem alinhamento com o negócio é perigoso.
+
+<details>
+  <summary>🔻 Clique para expandir os Logs de Simulação (Cenário de Prejuízo)</summary>
+
+```text
 --- Simulação Financeira (Decision Tree) ---
-Clientes Bons Aprovados: 126 (Lucro: R$ 126000)
-Clientes Bons Rejeitados (Custo de Oportunidade): 41 (Perda: R$ 41000)
-Calotes Tomados: 28 (Prejuízo: R$ -140000)
-=============================================
-RESULTADO LÍQUIDO DA CARTEIRA: R$ -55,000.00
-
-
+Clientes Bons Aprovados: 126 (Lucro: R$ 126.000)
+Calotes Tomados: 28 (Prejuízo: R$ -140.000)
+RESULTADO LÍQUIDO: R$ -55.000,00 (PREJUÍZO)
 
 --- Simulação Financeira (Random Forest) ---
-Clientes Bons Aprovados: 139 (Lucro: R$ 139000)
-Clientes Bons Rejeitados (Custo de Oportunidade): 28 (Perda: R$ 28000)
-Calotes Tomados: 32 (Prejuízo: R$ -160000)
-=============================================
-RESULTADO LÍQUIDO DA CARTEIRA: R$ -49,000.00
-
-
+Clientes Bons Aprovados: 139 (Lucro: R$ 139.000)
+Calotes Tomados: 32 (Prejuízo: R$ -160.000)
+RESULTADO LÍQUIDO: R$ -49.000,00 (PREJUÍZO)
 
 --- Simulação Financeira (Logistic Regression) ---
-Clientes Bons Aprovados: 118 (Lucro: R$ 118000)
-Clientes Bons Rejeitados (Custo de Oportunidade): 49 (Perda: R$ 49000)
-Calotes Tomados: 23 (Prejuízo: R$ -115000)
-=============================================
-RESULTADO LÍQUIDO DA CARTEIRA: R$ -46,000.00
-
-
+Clientes Bons Aprovados: 118 (Lucro: R$ 118.000)
+Calotes Tomados: 23 (Prejuízo: R$ -115.000)
+RESULTADO LÍQUIDO: R$ -46.000,00 (PREJUÍZO)
 
 --- Simulação Financeira (K-Nearest Neighbors) ---
-Clientes Bons Aprovados: 83 (Lucro: R$ 83000)
-Clientes Bons Rejeitados (Custo de Oportunidade): 84 (Perda: R$ 84000)
-Calotes Tomados: 33 (Prejuízo: R$ -165000)
-=============================================
-RESULTADO LÍQUIDO DA CARTEIRA: R$ -166,000.00
-
+Clientes Bons Aprovados: 83 (Lucro: R$ 83.000)
+Calotes Tomados: 33 (Prejuízo: R$ -165.000)
+RESULTADO LÍQUIDO: R$ -166.000,00 (PREJUÍZO CRÍTICO)
 ```
+</details>
 
-#### 5. Otimização do Limiar de Decisão (Threshold Tuning)Otimização do Limiar de Decisão (Threshold Tuning)
+#### 5. A Solução: Otimização do Limiar (Threshold Tuning)
 
-Por padrão, algoritmos de Machine Learning classificam um cliente como "Mau Pagador" se a probabilidade for maior que 50% (0.5). Porém, em nossa análise financeira, descobrimos que **esse padrão gera prejuízo**.
+Visto que o padrão gerou prejuízo, realizamos uma análise de sensibilidade variando a régua de corte. O objetivo foi encontrar o "Sweet Spot": o ponto exato onde maximizamos o lucro barrando os caloteiros, sem negar crédito excessivo aos bons pagadores.
 
 Realizamos uma análise de sensibilidade variando o limiar de decisão de 0 a 100% para encontrar o ponto de lucro máximo ("Sweet Spot").
 
@@ -140,9 +134,9 @@ Realizamos uma análise de sensibilidade variando o limiar de decisão de 0 a 10
 
 
 **Insights do Gráfico:**
-1.  **O Perigo do Padrão (0.5):** Se utilizássemos o threshold padrão de 0.5, a carteira entraria em prejuízo (região abaixo da linha vermelha tracejada), pois o modelo seria "leniente" demais.
-2.  **O Ponto Ótimo:** O lucro máximo é atingido com um threshold mais rigoroso, entre **0.15 e 0.25**. Isso significa que devemos negar crédito para qualquer cliente com probabilidade de calote acima de ~20%, e não esperar chegar a 50%.
-3.  **Robustez:** A Regressão Logística (Linha Laranja) se mostrou mais estável, mantendo a lucratividade positiva por uma faixa maior de limiares do que o Random Forest.
+1.  **A Virada do Jogo:** Ao ajustarmos o limiar da Regressão Logística de 0.50 para ~0.22, transformamos um prejuízo de R$ 46.000 em um **Lucro de R$ 121.000**.
+2. **Rigor Necessário:** O gráfico mostra que, para este negócio, precisamos ser conservadores. Devemos negar crédito para qualquer cliente com probabilidade de risco acima de 20% a 25%.   
+3.  **Robustez:** Robustez: A Regressão Logística (linha laranja) provou ser o modelo mais estável financeiramente, mantendo-se na zona de lucro por uma faixa maior de limiares do que o Random Forest.
 
 ---
 
@@ -161,13 +155,3 @@ git clone [https://github.com/SEU_USUARIO/NOME_DO_REPO.git](https://github.com/S
 
 ## Autor
 [Carlos Franch Aragão]
-
-
-
-### O que você precisa fazer agora:
-
-1.  **Preencher os "XX%"** na seção de Resultados com os números reais do seu notebook.
-2.  **Salvar as imagens:** Salve o gráfico do SHAP (`summary_plot`) e a Matriz de Confusão como imagens (png) numa pasta e coloque no README (posso te ensinar a linkar a imagem se precisar).
-3.  **Requirements:** Lembre-se de gerar o `requirements.txt` (`pip freeze > requirements.txt`).
-
-Ficou do jeito que você queria? Se quiser ajustar o tom para ser mais "técnico" ou mais "executivo", me avise!
